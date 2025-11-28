@@ -7,7 +7,7 @@ const nextConfig = {
   
   // Auto-detect URL for NextAuth (Netlify provides URL and DEPLOY_PRIME_URL)
   env: {
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL || process.env.URL || process.env.DEPLOY_PRIME_URL || 'http://localhost:3000',
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL || process.env.URL || process.env.DEPLOY_PRIME_URL,
   },
   
   // Headers for caching and security
