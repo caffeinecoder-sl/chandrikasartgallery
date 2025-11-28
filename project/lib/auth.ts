@@ -3,6 +3,15 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { connectToDatabase } from '@/lib/mongodb';
 import { User } from '@/lib/models';
 
+// Auto-detect the base URL
+const getBaseUrl = () => {
+  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  if (process.env.URL) return process.env.URL; // Netlify provides this
+  if (process.env.DEPLOY_PRIME_URL) return process.env.DEPLOY_PRIME_URL; // Netlify deploy previews
+  return 'http://localhost:3000';
+};
+
 export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/auth/login',
