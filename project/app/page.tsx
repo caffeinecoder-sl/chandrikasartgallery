@@ -1,13 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight, Menu, X } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Menu, X, ChevronDown } from 'lucide-react';
 import { AuthNav, AuthNavMobile } from '@/components/auth-nav';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const heroRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,28 +33,50 @@ export default function Home() {
     { href: '/subscribe', label: 'Subscribe' },
   ];
 
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 60 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.8,
+        ease: [0.215, 0.61, 0.355, 1],
+      },
+    }),
+  };
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-white/20">
       {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-black/80 backdrop-blur-xl border-b border-white/[0.05]' : ''}`}>
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="flex items-center justify-between h-20">
+      <motion.nav
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-[#050505]/80 backdrop-blur-md border-b border-white/[0.05]' : 'bg-transparent'}`}
+      >
+        <div className="max-w-[1800px] mx-auto px-6 lg:px-12">
+          <div className="flex items-center justify-between h-24">
             {/* Logo */}
-            <Link href="/" className="relative z-50">
-              <span className="text-lg tracking-[0.2em] font-light uppercase">
-                Chandrika <span className="font-medium">Maelge</span>
-              </span>
+            <Link href="/" className="relative z-50 group">
+              <div className="flex flex-col">
+                <span className="text-xl tracking-[0.2em] font-light uppercase group-hover:opacity-70 transition-opacity">
+                  Chandrika <span className="font-medium">Maelge</span>
+                </span>
+                <span className="text-[10px] tracking-[0.4em] text-white/40 uppercase mt-1">Fine Art</span>
+              </div>
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-12">
+            <div className="hidden md:flex items-center gap-16">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-white/60 hover:text-white transition-colors tracking-wide"
+                  className="text-sm text-white/60 hover:text-white transition-colors tracking-[0.1em] uppercase relative group overflow-hidden"
                 >
-                  {link.label}
+                  <span className="relative z-10">{link.label}</span>
+                  <span className="absolute bottom-0 left-0 w-full h-[1px] bg-white transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out" />
                 </Link>
               ))}
               <AuthNav />
@@ -54,7 +85,7 @@ export default function Home() {
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden relative z-50 p-2"
+              className="md:hidden relative z-50 p-2 hover:bg-white/5 rounded-full transition-colors"
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -62,139 +93,208 @@ export default function Home() {
         </div>
 
         {/* Mobile Menu */}
-        {menuOpen && (
-          <div className="md:hidden fixed inset-0 bg-black z-40 flex flex-col justify-center items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="text-2xl font-light tracking-wide hover:text-white/60 transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div className="mt-4">
-              <AuthNavMobile onClose={() => setMenuOpen(false)} />
-            </div>
-          </div>
-        )}
-      </nav>
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: "-100%" }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: "-100%" }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="md:hidden fixed inset-0 bg-[#050505] z-40 flex flex-col justify-center items-center gap-8"
+            >
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="text-4xl font-light tracking-wide hover:text-white/60 transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <div className="mt-8">
+                <AuthNavMobile onClose={() => setMenuOpen(false)} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
         {/* Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-amber-500/5 to-orange-500/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gradient-to-r from-violet-500/5 to-purple-500/5 rounded-full blur-3xl" />
-        </div>
+        <motion.div style={{ y, opacity }} className="absolute inset-0 z-0">
+          <div className="absolute top-1/4 left-1/4 w-[800px] h-[800px] bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-full blur-[120px] opacity-40" />
+          <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-full blur-[120px] opacity-40" />
+          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
+        </motion.div>
 
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 opacity-[0.02]" style={{
-          backgroundImage: 'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)',
-          backgroundSize: '100px 100px'
-        }} />
-
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 py-32">
-          <div className="max-w-4xl">
+        <div className="relative z-10 max-w-[1800px] mx-auto px-6 lg:px-12 w-full">
+          <div className="max-w-6xl">
             {/* Tagline */}
-            <div className="inline-flex items-center gap-3 mb-8">
-              <div className="w-12 h-[1px] bg-gradient-to-r from-transparent to-white/40" />
-              <span className="text-xs tracking-[0.3em] uppercase text-white/40">Fine Art Collection</span>
-            </div>
+            <motion.div
+              custom={0}
+              initial="hidden"
+              animate="visible"
+              variants={fadeInUp}
+              className="inline-flex items-center gap-4 mb-12"
+            >
+              <div className="w-16 h-[1px] bg-white/30" />
+              <span className="text-sm tracking-[0.4em] uppercase text-white/60">Contemporary Fine Art</span>
+            </motion.div>
 
             {/* Main Heading */}
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extralight leading-[1.1] tracking-tight mb-8">
-              Where Art<br />
-              <span className="font-medium bg-gradient-to-r from-white via-white/90 to-white/60 bg-clip-text">
-                Meets Soul
-              </span>
-            </h1>
+            <motion.h1
+              custom={1}
+              initial="hidden"
+              animate="visible"
+              variants={fadeInUp}
+              className="text-6xl sm:text-7xl md:text-8xl lg:text-[10rem] font-light leading-[0.9] tracking-tight mb-12 mix-blend-difference"
+            >
+              Where Art <br />
+              <span className="font-serif italic text-white/90">Transcends</span> <br />
+              The Ordinary
+            </motion.h1>
 
             {/* Description */}
-            <p className="text-lg md:text-xl text-white/40 max-w-xl leading-relaxed mb-12 font-light">
-              Experience a curated collection of contemporary masterpieces. 
-              Each piece tells a story, evokes emotion, and transforms spaces 
-              into sanctuaries of beauty.
-            </p>
+            <motion.p
+              custom={2}
+              initial="hidden"
+              animate="visible"
+              variants={fadeInUp}
+              className="text-xl md:text-2xl text-white/50 max-w-2xl leading-relaxed mb-16 font-light"
+            >
+              A curated collection of masterpieces that evoke emotion and transform spaces into sanctuaries of profound beauty.
+            </motion.p>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <motion.div
+              custom={3}
+              initial="hidden"
+              animate="visible"
+              variants={fadeInUp}
+              className="flex flex-col sm:flex-row gap-6"
+            >
               <Link href="/shop">
-                <span className="group inline-flex items-center gap-3 px-8 py-4 bg-white text-black rounded-full font-medium hover:bg-white/90 transition-all">
+                <span className="group inline-flex items-center gap-4 px-10 py-5 bg-white text-black rounded-full text-lg font-medium hover:bg-white/90 transition-all transform hover:scale-105 duration-300">
                   View Collection
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </span>
               </Link>
               <Link href="/gallery">
-                <span className="inline-flex items-center gap-3 px-8 py-4 border border-white/20 rounded-full font-light hover:bg-white/5 transition-all">
+                <span className="group inline-flex items-center gap-4 px-10 py-5 border border-white/20 rounded-full text-lg font-light hover:bg-white/5 transition-all">
                   Explore Gallery
+                  <ArrowUpRight size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                 </span>
               </Link>
-            </div>
+            </motion.div>
           </div>
         </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/20">
-          <span className="text-xs tracking-widest uppercase">Scroll</span>
-          <div className="w-[1px] h-12 bg-gradient-to-b from-white/20 to-transparent" />
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5, duration: 1 }}
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-white/30"
+        >
+          <span className="text-[10px] tracking-[0.3em] uppercase">Scroll</span>
+          <ChevronDown className="animate-bounce" size={20} />
+        </motion.div>
       </section>
 
       {/* Featured Section */}
-      <section className="py-32 px-6 lg:px-12 border-t border-white/[0.05]">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+      <section className="py-40 px-6 lg:px-12 border-t border-white/[0.05]">
+        <div className="max-w-[1800px] mx-auto">
+          <div className="grid lg:grid-cols-12 gap-16 lg:gap-24 items-center">
             {/* Text Content */}
-            <div>
-              <span className="text-xs tracking-[0.3em] uppercase text-white/40 mb-4 block">The Artist</span>
-              <h2 className="text-4xl md:text-5xl font-extralight leading-tight mb-8">
-                A Journey Through<br />
-                <span className="font-medium">Color & Emotion</span>
-              </h2>
-              <p className="text-white/40 text-lg leading-relaxed mb-8 font-light">
-                Chandrika Maelge creates art that bridges the gap between the visible 
-                and the felt. With each brushstroke, she captures moments of profound 
+            <div className="lg:col-span-5">
+              <motion.span
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-xs tracking-[0.3em] uppercase text-white/40 mb-6 block"
+              >
+                The Artist
+              </motion.span>
+              <motion.h2
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-5xl md:text-6xl font-light leading-tight mb-10"
+              >
+                A Journey Through <br />
+                <span className="font-serif italic text-white/80">Color & Emotion</span>
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="text-white/50 text-xl leading-relaxed mb-12 font-light"
+              >
+                Chandrika Maelge creates art that bridges the gap between the visible
+                and the felt. With each brushstroke, she captures moments of profound
                 beauty and invites viewers into a world where imagination reigns supreme.
-              </p>
-              <Link href="/blog">
-                <span className="group inline-flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors">
-                  Read the Journal
-                  <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                </span>
-              </Link>
+              </motion.p>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+              >
+                <Link href="/blog">
+                  <span className="group inline-flex items-center gap-2 text-lg text-white hover:text-white/70 transition-colors border-b border-white/30 pb-1">
+                    Read the Journal
+                    <ArrowUpRight size={18} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </span>
+                </Link>
+              </motion.div>
             </div>
 
             {/* Image Placeholder */}
-            <div className="relative aspect-[4/5] bg-gradient-to-br from-white/[0.02] to-white/[0.05] rounded-2xl overflow-hidden border border-white/[0.05]">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="lg:col-span-7 relative aspect-[4/3] bg-[#111] rounded-sm overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent opacity-50" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-24 h-24 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-4">
-                    <span className="text-4xl font-light text-white/20">CM</span>
+                <div className="text-center transform group-hover:scale-105 transition-transform duration-700">
+                  <div className="w-32 h-32 rounded-full border border-white/10 flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
+                    <span className="text-5xl font-serif italic text-white/20">CM</span>
                   </div>
-                  <span className="text-white/20 text-sm tracking-wide">Featured Artwork</span>
+                  <span className="text-white/30 text-sm tracking-[0.2em] uppercase">Featured Artwork</span>
                 </div>
               </div>
-              {/* Decorative Elements */}
-              <div className="absolute top-8 right-8 w-24 h-24 border border-white/[0.05] rounded-full" />
-              <div className="absolute bottom-8 left-8 w-16 h-16 border border-white/[0.05] rounded-full" />
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Services/Features */}
-      <section className="py-32 px-6 lg:px-12 bg-white/[0.01]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <span className="text-xs tracking-[0.3em] uppercase text-white/40 mb-4 block">What We Offer</span>
-            <h2 className="text-4xl md:text-5xl font-extralight">
-              Experience the <span className="font-medium">Extraordinary</span>
-            </h2>
+      <section className="py-40 px-6 lg:px-12 bg-[#080808]">
+        <div className="max-w-[1800px] mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-24">
+            <div>
+              <span className="text-xs tracking-[0.3em] uppercase text-white/40 mb-6 block">What We Offer</span>
+              <h2 className="text-5xl md:text-7xl font-light">
+                Experience the <br />
+                <span className="font-serif italic text-white/80">Extraordinary</span>
+              </h2>
+            </div>
+            <Link href="/shop" className="hidden md:block">
+              <span className="group inline-flex items-center gap-3 px-8 py-4 border border-white/10 rounded-full text-sm font-medium hover:bg-white text-white hover:text-black transition-all">
+                View All Services
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </span>
+            </Link>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-white/10 border border-white/10">
             {[
               {
                 title: 'Original Art',
@@ -217,12 +317,14 @@ export default function Home() {
                 link: '/blog',
               },
             ].map((item, idx) => (
-              <Link key={idx} href={item.link}>
-                <div className="group p-8 rounded-2xl border border-white/[0.05] hover:border-white/[0.1] hover:bg-white/[0.02] transition-all h-full">
-                  <span className="text-5xl font-extralight text-white/10 block mb-6">0{idx + 1}</span>
-                  <h3 className="text-xl font-light mb-3 group-hover:text-white/90 transition-colors">{item.title}</h3>
-                  <p className="text-white/40 text-sm leading-relaxed font-light">{item.description}</p>
-                  <ArrowUpRight size={16} className="mt-6 text-white/20 group-hover:text-white/60 transition-colors" />
+              <Link key={idx} href={item.link} className="group relative bg-[#050505] p-12 h-96 flex flex-col justify-between hover:bg-[#0a0a0a] transition-colors">
+                <div>
+                  <span className="text-6xl font-serif italic text-white/10 block mb-8 group-hover:text-white/20 transition-colors">0{idx + 1}</span>
+                  <h3 className="text-2xl font-light mb-4 group-hover:text-white transition-colors">{item.title}</h3>
+                  <p className="text-white/40 text-sm leading-relaxed font-light max-w-[200px]">{item.description}</p>
+                </div>
+                <div className="flex justify-end">
+                  <ArrowUpRight size={24} className="text-white/20 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
                 </div>
               </Link>
             ))}
@@ -231,55 +333,54 @@ export default function Home() {
       </section>
 
       {/* Newsletter CTA */}
-      <section className="py-32 px-6 lg:px-12">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="p-16 rounded-3xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/[0.05] relative overflow-hidden">
-            {/* Decorative */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-500/5 to-transparent rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-violet-500/5 to-transparent rounded-full blur-3xl" />
-            
-            <div className="relative z-10">
-              <span className="text-xs tracking-[0.3em] uppercase text-white/40 mb-4 block">Join the Circle</span>
-              <h2 className="text-4xl md:text-5xl font-extralight mb-6">
-                Stay <span className="font-medium">Inspired</span>
-              </h2>
-              <p className="text-white/40 text-lg max-w-lg mx-auto mb-10 font-light leading-relaxed">
-                Receive exclusive previews of new collections, behind-the-scenes content, 
-                and invitations to private viewings.
-              </p>
-              <Link href="/subscribe">
-                <span className="group inline-flex items-center gap-3 px-8 py-4 bg-white text-black rounded-full font-medium hover:bg-white/90 transition-all">
-                  Subscribe Now
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </span>
-              </Link>
-            </div>
+      <section className="py-40 px-6 lg:px-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/[0.02]" />
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <span className="text-xs tracking-[0.3em] uppercase text-white/40 mb-8 block">Join the Circle</span>
+          <h2 className="text-6xl md:text-8xl font-light mb-12 tracking-tight">
+            Stay <span className="font-serif italic text-white/80">Inspired</span>
+          </h2>
+          <p className="text-white/40 text-xl max-w-xl mx-auto mb-16 font-light leading-relaxed">
+            Receive exclusive previews of new collections, behind-the-scenes content,
+            and invitations to private viewings.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <input
+              type="email"
+              placeholder="Enter your email address"
+              className="w-full sm:w-96 px-8 py-5 bg-white/5 border border-white/10 rounded-full text-white placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors"
+            />
+            <button className="w-full sm:w-auto px-10 py-5 bg-white text-black rounded-full font-medium hover:bg-white/90 transition-all">
+              Subscribe
+            </button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.05] py-20 px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+      <footer className="border-t border-white/[0.05] py-24 px-6 lg:px-12 bg-[#020202]">
+        <div className="max-w-[1800px] mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-16 mb-24">
             {/* Brand */}
-            <div className="lg:col-span-2">
-              <span className="text-lg tracking-[0.2em] font-light uppercase block mb-4">
-                Chandrika <span className="font-medium">Maelge</span>
-              </span>
-              <p className="text-white/30 text-sm max-w-sm leading-relaxed font-light">
-                Creating art that speaks to the soul. Based in Sri Lanka, 
+            <div className="lg:col-span-4">
+              <Link href="/" className="block mb-8">
+                <span className="text-2xl tracking-[0.2em] font-light uppercase">
+                  Chandrika <span className="font-medium">Maelge</span>
+                </span>
+              </Link>
+              <p className="text-white/30 text-lg max-w-sm leading-relaxed font-light">
+                Creating art that speaks to the soul. Based in Sri Lanka,
                 exhibited worldwide.
               </p>
             </div>
 
             {/* Links */}
-            <div>
-              <h4 className="text-xs tracking-[0.2em] uppercase text-white/40 mb-6">Explore</h4>
-              <ul className="space-y-3">
+            <div className="lg:col-span-2 lg:col-start-7">
+              <h4 className="text-xs tracking-[0.2em] uppercase text-white/40 mb-8">Explore</h4>
+              <ul className="space-y-4">
                 {['Gallery', 'Collection', 'Journal', 'About'].map((item) => (
                   <li key={item}>
-                    <Link href={`/${item.toLowerCase()}`} className="text-sm text-white/50 hover:text-white transition-colors font-light">
+                    <Link href={`/${item.toLowerCase()}`} className="text-white/50 hover:text-white transition-colors font-light">
                       {item}
                     </Link>
                   </li>
@@ -288,15 +389,29 @@ export default function Home() {
             </div>
 
             {/* Connect */}
-            <div>
-              <h4 className="text-xs tracking-[0.2em] uppercase text-white/40 mb-6">Connect</h4>
-              <ul className="space-y-3">
+            <div className="lg:col-span-2">
+              <h4 className="text-xs tracking-[0.2em] uppercase text-white/40 mb-8">Connect</h4>
+              <ul className="space-y-4">
                 {['Subscribe', 'Contact', 'Instagram', 'Studio'].map((item) => (
                   <li key={item}>
-                    <Link 
-                      href={item === 'Studio' ? '/admin' : item === 'Subscribe' ? '/subscribe' : '#'} 
-                      className="text-sm text-white/50 hover:text-white transition-colors font-light"
+                    <Link
+                      href={item === 'Studio' ? '/admin' : item === 'Subscribe' ? '/subscribe' : '#'}
+                      className="text-white/50 hover:text-white transition-colors font-light"
                     >
+                      {item}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div className="lg:col-span-2">
+              <h4 className="text-xs tracking-[0.2em] uppercase text-white/40 mb-8">Legal</h4>
+              <ul className="space-y-4">
+                {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((item) => (
+                  <li key={item}>
+                    <Link href="#" className="text-white/50 hover:text-white transition-colors font-light">
                       {item}
                     </Link>
                   </li>
@@ -307,13 +422,12 @@ export default function Home() {
 
           {/* Bottom */}
           <div className="pt-8 border-t border-white/[0.05] flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-white/20 text-xs font-light">
-              © 2024 Chandrika Maelge Art. All rights reserved.
+            <p className="text-white/20 text-xs font-light tracking-wide">
+              © 2024 CHANDRIKA MAELGE ART. ALL RIGHTS RESERVED.
             </p>
-            <div className="flex gap-6">
-              <a href="#" className="text-white/20 hover:text-white/40 text-xs transition-colors">Privacy</a>
-              <a href="#" className="text-white/20 hover:text-white/40 text-xs transition-colors">Terms</a>
-            </div>
+            <p className="text-white/20 text-xs font-light tracking-wide">
+              DESIGNED WITH PASSION
+            </p>
           </div>
         </div>
       </footer>
