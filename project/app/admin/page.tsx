@@ -38,16 +38,16 @@ export default function AdminDashboard() {
           fetch('/api/images/list', { cache: 'no-store' }).catch(() => ({ ok: false }))
         ]);
 
-        const blogData = blogRes.ok ? await (blogRes as Response).json() : { posts: [] };
-        const productsData = productsRes.ok ? await (productsRes as Response).json() : { products: [] };
-        const subscribersData = subscribersRes.ok ? await (subscribersRes as Response).json() : { subscribers: [] };
-        const imagesData = imagesRes.ok ? await (imagesRes as Response).json() : { images: [] };
+        const blogData = blogRes.ok ? await (blogRes as Response).json() : [];
+        const productsData = productsRes.ok ? await (productsRes as Response).json() : [];
+        const subscribersData = subscribersRes.ok ? await (subscribersRes as Response).json() : [];
+        const imagesData = imagesRes.ok ? await (imagesRes as Response).json() : [];
 
         setStats({
-          blogPosts: blogData.posts?.length || 0,
-          products: productsData.products?.length || 0,
-          subscribers: subscribersData.subscribers?.length || 0,
-          images: imagesData.images?.length || 0
+          blogPosts: Array.isArray(blogData) ? blogData.length : 0,
+          products: Array.isArray(productsData) ? productsData.length : 0,
+          subscribers: Array.isArray(subscribersData) ? subscribersData.length : 0,
+          images: Array.isArray(imagesData) ? imagesData.length : 0
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -173,8 +173,8 @@ export default function AdminDashboard() {
               <Link key={i} href={item.href}>
                 <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.03] transition-colors group">
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${item.done
-                      ? 'bg-emerald-500 border-emerald-500'
-                      : 'border-white/20'
+                    ? 'bg-emerald-500 border-emerald-500'
+                    : 'border-white/20'
                     }`}>
                     {item.done && (
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
