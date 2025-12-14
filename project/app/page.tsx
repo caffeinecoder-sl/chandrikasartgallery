@@ -41,7 +41,7 @@ export default function Home() {
       transition: {
         delay: i * 0.1,
         duration: 0.8,
-        ease: [0.215, 0.61, 0.355, 1],
+        ease: [0.215, 0.61, 0.355, 1] as const,
       },
     }),
   };
@@ -96,24 +96,56 @@ export default function Home() {
         <AnimatePresence>
           {menuOpen && (
             <motion.div
-              initial={{ opacity: 0, y: "-100%" }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: "-100%" }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="md:hidden fixed inset-0 bg-[#050505] z-40 flex flex-col justify-center items-center gap-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="md:hidden fixed inset-0 bg-[#050505] z-40 flex flex-col"
             >
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="text-4xl font-light tracking-wide hover:text-white/60 transition-colors"
-                >
-                  {link.label}
+              {/* Mobile Menu Header with Logo */}
+              <div className="flex items-center justify-between h-24 px-6">
+                <Link href="/" onClick={() => setMenuOpen(false)} className="group">
+                  <div className="flex flex-col">
+                    <span className="text-xl tracking-[0.2em] font-light uppercase group-hover:opacity-70 transition-opacity">
+                      Chandrika <span className="font-medium">Maelge</span>
+                    </span>
+                    <span className="text-[10px] tracking-[0.4em] text-white/40 uppercase mt-1">Fine Art</span>
+                  </div>
                 </Link>
-              ))}
-              <div className="mt-8">
-                <AuthNavMobile onClose={() => setMenuOpen(false)} />
+                <button
+                  onClick={() => setMenuOpen(false)}
+                  className="p-2 hover:bg-white/5 rounded-full transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              {/* Mobile Menu Links */}
+              <div className="flex-1 flex flex-col justify-center items-center gap-8">
+                {navLinks.map((link, index) => (
+                  <motion.div
+                    key={link.href}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1, duration: 0.3 }}
+                  >
+                    <Link
+                      href={link.href}
+                      onClick={() => setMenuOpen(false)}
+                      className="text-4xl font-light tracking-wide hover:text-white/60 transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.div>
+                ))}
+                <motion.div
+                  className="mt-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.3 }}
+                >
+                  <AuthNavMobile onClose={() => setMenuOpen(false)} />
+                </motion.div>
               </div>
             </motion.div>
           )}
